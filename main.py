@@ -1,883 +1,459 @@
 import streamlit as st
-import math
-import textwrap
 
 
-# =========================================================
+# =========================
 # 페이지 설정
-# =========================================================
+# =========================
 st.set_page_config(
-    page_title="TRIP TONE",
-    page_icon="✦",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    page_title="Trip Tone",
+    page_icon="✈️",
+    layout="wide"
 )
 
 
-# =========================================================
-# HTML 출력 함수
-# 들여쓰기 때문에 HTML이 코드처럼 보이는 문제 방지
-# =========================================================
-def html(content):
-    st.markdown(
-        textwrap.dedent(content).strip(),
-        unsafe_allow_html=True
-    )
-
-
-# =========================================================
-# CSS
-# =========================================================
-html("""
+# =========================
+# 디자인
+# =========================
+st.markdown(
+    """
 <style>
-
-html, body, [class*="css"] {
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        "Noto Sans KR",
-        sans-serif;
-}
-
 .stApp {
-    background:
-        radial-gradient(
-            circle at 15% 10%,
-            rgba(220, 226, 255, 0.65),
-            transparent 28%
-        ),
-        radial-gradient(
-            circle at 90% 20%,
-            rgba(255, 225, 235, 0.55),
-            transparent 30%
-        ),
-        #f8f8f6;
-    color: #111111;
+    background: linear-gradient(135deg, #f8f9fc 0%, #f6f3f7 100%);
 }
 
 .block-container {
     max-width: 1050px;
-    padding-top: 2rem;
+    padding-top: 3rem;
     padding-bottom: 5rem;
 }
 
-
-/* Streamlit 기본 메뉴 숨기기 */
-#MainMenu {
-    visibility: hidden;
+h1 {
+    letter-spacing: -2px;
 }
 
-footer {
-    visibility: hidden;
+h2, h3 {
+    letter-spacing: -1px;
 }
 
-header {
-    background: transparent !important;
-}
-
-
-/* HERO */
-.hero {
-    padding: 70px 10px 50px 10px;
-    text-align: center;
-}
-
-.logo {
-    font-size: 12px;
-    letter-spacing: 0.38em;
-    font-weight: 700;
-    color: #777;
-    margin-bottom: 22px;
-}
-
-.hero-title {
-    font-size: clamp(48px, 8vw, 86px);
-    line-height: 0.98;
-    letter-spacing: -0.06em;
-    font-weight: 750;
-    color: #111;
-}
-
-.hero-sub {
-    max-width: 590px;
-    margin: 28px auto 0 auto;
-    font-size: 16px;
-    line-height: 1.8;
-    color: #747474;
-}
-
-
-/* 공통 카드 */
-.card {
-    background: rgba(255,255,255,0.82);
-    border: 1px solid rgba(0,0,0,0.055);
-    border-radius: 28px;
-    padding: 30px;
-    box-shadow:
-        0 18px 55px rgba(0,0,0,0.055);
-}
-
-.section-label {
-    font-size: 11px;
-    font-weight: 750;
-    color: #999;
-    letter-spacing: 0.18em;
-    margin-bottom: 13px;
-}
-
-.section-title {
-    font-size: 30px;
-    font-weight: 730;
-    letter-spacing: -0.035em;
-    margin-bottom: 10px;
-    color: #141414;
-}
-
-.section-text {
-    font-size: 14px;
-    color: #777;
-    line-height: 1.75;
-}
-
-
-/* 입력 카드 */
-.input-card {
-    max-width: 680px;
-    margin: 0 auto 25px auto;
-    padding: 35px;
-    background: rgba(255,255,255,0.84);
-    border: 1px solid rgba(0,0,0,0.055);
-    border-radius: 30px;
-    box-shadow:
-        0 20px 60px rgba(0,0,0,0.055);
-}
-
-.color-preview {
-    width: 100%;
-    height: 130px;
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background-color: rgba(255,255,255,0.82);
     border-radius: 22px;
     border: 1px solid rgba(0,0,0,0.06);
-    margin-top: 18px;
-    margin-bottom: 13px;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.05);
 }
 
-.color-meta {
-    display: flex;
-    justify-content: space-between;
-    color: #777;
-    font-size: 13px;
-}
-
-
-/* 결과 헤더 */
-.result-header {
-    margin-top: 70px;
-    margin-bottom: 25px;
-}
-
-.result-big-title {
-    font-size: 40px;
-    font-weight: 750;
-    letter-spacing: -0.045em;
-    line-height: 1.1;
-}
-
-
-/* 결과 카드 */
-.result-card {
-    background: rgba(255,255,255,0.88);
-    border: 1px solid rgba(0,0,0,0.055);
-    border-radius: 28px;
-    padding: 30px;
-    min-height: 250px;
-    box-shadow:
-        0 18px 55px rgba(0,0,0,0.055);
-}
-
-.result-label {
-    font-size: 11px;
-    font-weight: 750;
-    letter-spacing: 0.18em;
-    color: #999;
-    margin-bottom: 20px;
-}
-
-.result-title {
-    font-size: 26px;
-    font-weight: 720;
-    line-height: 1.35;
-    letter-spacing: -0.025em;
-    margin-bottom: 14px;
-}
-
-.result-text {
-    font-size: 14px;
-    color: #686868;
-    line-height: 1.8;
-}
-
-
-/* 태그 */
-.chip {
-    display: inline-block;
-    padding: 8px 13px;
-    margin: 4px 4px 4px 0;
-    border-radius: 999px;
-    background: #f2f2ef;
-    color: #444;
-    font-size: 13px;
-}
-
-
-/* 메인 결과 */
-.hero-result {
-    border-radius: 32px;
-    padding: 40px;
-    margin-top: 30px;
-    overflow: hidden;
-    position: relative;
-}
-
-.hero-result::after {
-    content: "";
-    position: absolute;
-    width: 270px;
-    height: 270px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.12);
-    right: -90px;
-    top: -110px;
-}
-
-.hero-result-label {
-    font-size: 11px;
-    font-weight: 750;
-    letter-spacing: 0.2em;
-    opacity: 0.7;
-}
-
-.hero-result-title {
-    font-size: 38px;
-    font-weight: 750;
-    letter-spacing: -0.04em;
-    margin: 10px 0 15px 0;
-}
-
-.hero-result-text {
-    max-width: 720px;
-    font-size: 15px;
-    line-height: 1.8;
-    opacity: 0.88;
-}
-
-
-/* 버튼 */
 .stButton > button {
     width: 100%;
-    height: 56px;
-    border: 0;
     border-radius: 999px;
-    background: #111;
+    height: 52px;
+    background-color: #111111;
     color: white;
-    font-size: 15px;
-    font-weight: 650;
-    transition: all 0.18s ease;
+    border: none;
+    font-weight: 600;
+    font-size: 16px;
 }
 
 .stButton > button:hover {
-    background: #303030;
+    background-color: #333333;
     color: white;
-    border: 0;
-    transform: translateY(-1px);
+    border: none;
 }
 
-
-/* 컬러피커 */
 div[data-testid="stColorPicker"] {
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
-
-/* footer */
-.custom-footer {
-    text-align: center;
-    margin-top: 80px;
-    color: #aaa;
-    font-size: 11px;
-    letter-spacing: 0.18em;
+hr {
+    margin-top: 40px;
+    margin-bottom: 40px;
 }
-
 </style>
-""")
+""",
+    unsafe_allow_html=True
+)
 
 
-# =========================================================
-# 색상별 추천 데이터
-# =========================================================
-color_styles = {
-
+# =========================
+# 색상 추천 데이터
+# =========================
+color_data = {
     "RED": {
-        "rgb": (220, 55, 55),
+        "rgb": (220, 60, 60),
         "name": "레드",
-        "mood": "Bold & Energetic",
-
+        "mood": "강렬하고 자신감 있는 분위기",
         "destination": "바르셀로나 🇪🇸",
-        "destination_desc":
-            "강렬한 색채와 자유로운 분위기가 어우러지는 도시입니다. "
-            "레드의 활기찬 이미지와 바르셀로나의 밝고 생동감 있는 분위기가 잘 어울립니다.",
-
-        "look": "모던 시티 룩",
-        "clothes": [
-            "레드 포인트 톱",
+        "destination_reason":
+            "화려한 색채와 활기찬 거리 분위기가 레드의 에너지와 잘 어울립니다.",
+        "style": "Bold City Look",
+        "fashion": [
+            "레드 포인트 상의",
             "블랙 와이드 팬츠",
             "화이트 스니커즈",
             "실버 액세서리"
         ],
-
-        "fashion_desc":
-            "레드를 옷 전체에 사용하기보다 상의나 가방처럼 한 부분에 포인트로 사용하면 "
-            "강렬하면서도 세련된 스타일을 만들 수 있습니다.",
-
         "pair": "블랙 · 화이트 · 차콜"
     },
 
-
     "ORANGE": {
-        "rgb": (235, 135, 55),
+        "rgb": (235, 140, 55),
         "name": "오렌지",
-        "mood": "Warm & Vibrant",
-
+        "mood": "따뜻하고 생동감 있는 분위기",
         "destination": "로마 🇮🇹",
-        "destination_desc":
-            "따뜻한 건축물과 햇빛이 인상적인 도시로, "
-            "오렌지의 따뜻하고 활기찬 분위기와 자연스럽게 어울립니다.",
-
-        "look": "웜 클래식 룩",
-        "clothes": [
+        "destination_reason":
+            "따뜻한 햇빛과 고전적인 건축물이 오렌지의 따뜻한 이미지와 잘 어울립니다.",
+        "style": "Warm Classic Look",
+        "fashion": [
             "오렌지 니트",
             "크림 팬츠",
             "브라운 로퍼",
             "가죽 숄더백"
         ],
-
-        "fashion_desc":
-            "오렌지는 크림이나 브라운처럼 따뜻한 중성색과 함께 사용하면 "
-            "부담스럽지 않으면서 자연스럽고 고급스럽게 보입니다.",
-
         "pair": "크림 · 브라운 · 베이지"
     },
 
-
     "YELLOW": {
-        "rgb": (232, 195, 55),
+        "rgb": (235, 200, 60),
         "name": "옐로",
-        "mood": "Bright & Playful",
-
+        "mood": "밝고 경쾌한 분위기",
         "destination": "제주 🇰🇷",
-        "destination_desc":
-            "탁 트인 자연과 밝고 편안한 분위기가 특징인 여행지입니다. "
-            "옐로의 밝은 이미지가 제주의 자연스러운 분위기와 잘 어울립니다.",
-
-        "look": "라이트 캐주얼 룩",
-        "clothes": [
+        "destination_reason":
+            "밝고 자연스러운 제주의 풍경이 옐로의 산뜻한 분위기와 잘 어울립니다.",
+        "style": "Light Casual Look",
+        "fashion": [
             "옐로 가디건",
             "화이트 티셔츠",
             "연청 데님",
             "캔버스백"
         ],
-
-        "fashion_desc":
-            "밝은 옐로를 데님과 화이트에 조합하면 여행지에서 부담 없이 입기 좋은 "
-            "산뜻하고 편안한 코디가 완성됩니다.",
-
         "pair": "화이트 · 데님 · 라이트 그레이"
     },
 
-
     "GREEN": {
-        "rgb": (65, 145, 90),
+        "rgb": (70, 145, 90),
         "name": "그린",
-        "mood": "Natural & Calm",
-
+        "mood": "차분하고 자연스러운 분위기",
         "destination": "코펜하겐 🇩🇰",
-        "destination_desc":
-            "자연과 도시가 조화를 이루고 차분한 북유럽 감성이 느껴지는 곳입니다. "
-            "그린의 안정적이고 자연스러운 느낌과 잘 맞습니다.",
-
-        "look": "내추럴 미니멀 룩",
-        "clothes": [
+        "destination_reason":
+            "자연과 도시가 조화를 이루는 북유럽 분위기가 그린과 잘 어울립니다.",
+        "style": "Natural Minimal Look",
+        "fashion": [
             "그린 셔츠",
             "베이지 팬츠",
             "화이트 스니커즈",
             "브라운 토트백"
         ],
-
-        "fashion_desc":
-            "그린은 베이지와 브라운 같은 자연 계열 색상과 함께 사용하면 "
-            "차분하면서도 감각적인 스타일을 만들 수 있습니다.",
-
         "pair": "베이지 · 브라운 · 아이보리"
     },
-
 
     "BLUE": {
         "rgb": (60, 105, 205),
         "name": "블루",
-        "mood": "Clean & Cool",
-
+        "mood": "깔끔하고 시원한 분위기",
         "destination": "도쿄 🇯🇵",
-        "destination_desc":
-            "깔끔하고 정돈된 도시 풍경과 현대적인 분위기를 가진 여행지입니다. "
-            "블루의 시원하고 세련된 이미지와 잘 어울립니다.",
-
-        "look": "클린 미니멀 룩",
-        "clothes": [
+        "destination_reason":
+            "정돈된 도시 이미지와 현대적인 분위기가 블루의 차분함과 잘 맞습니다.",
+        "style": "Clean Minimal Look",
+        "fashion": [
             "블루 셔츠",
             "그레이 와이드 팬츠",
             "화이트 스니커즈",
             "실버 액세서리"
         ],
-
-        "fashion_desc":
-            "블루를 화이트와 그레이 같은 무채색과 함께 사용하면 "
-            "깔끔하고 도시적인 느낌을 강조할 수 있습니다.",
-
         "pair": "화이트 · 그레이 · 네이비"
     },
-
 
     "PURPLE": {
         "rgb": (135, 80, 185),
         "name": "퍼플",
-        "mood": "Artistic & Unique",
-
+        "mood": "독특하고 예술적인 분위기",
         "destination": "파리 🇫🇷",
-        "destination_desc":
-            "예술과 패션의 분위기가 강한 도시로, "
-            "퍼플의 독특하고 예술적인 이미지와 잘 어울립니다.",
-
-        "look": "아티스틱 시크 룩",
-        "clothes": [
+        "destination_reason":
+            "예술과 패션의 도시인 파리가 퍼플의 개성 있는 분위기와 잘 어울립니다.",
+        "style": "Artistic Chic Look",
+        "fashion": [
             "퍼플 니트",
             "차콜 슬랙스",
             "블랙 로퍼",
             "미니 숄더백"
         ],
-
-        "fashion_desc":
-            "퍼플은 차콜이나 블랙과 조합하면 색의 개성은 유지하면서도 "
-            "전체적인 스타일은 차분하고 세련되게 정리할 수 있습니다.",
-
         "pair": "차콜 · 블랙 · 라이트 그레이"
     },
 
-
     "PINK": {
-        "rgb": (225, 115, 150),
+        "rgb": (225, 115, 155),
         "name": "핑크",
-        "mood": "Soft & Modern",
-
+        "mood": "부드럽고 세련된 분위기",
         "destination": "파리 🇫🇷",
-        "destination_desc":
-            "클래식한 건축과 세련된 거리 분위기가 특징인 도시입니다. "
-            "핑크의 부드러운 이미지에 도시적인 느낌을 더하기 좋은 여행지입니다.",
-
-        "look": "소프트 모던 룩",
-        "clothes": [
+        "destination_reason":
+            "클래식하면서 세련된 파리의 분위기가 핑크와 자연스럽게 어울립니다.",
+        "style": "Soft Modern Look",
+        "fashion": [
             "핑크 가디건",
             "그레이 팬츠",
             "화이트 스니커즈",
             "미니백"
         ],
-
-        "fashion_desc":
-            "핑크를 그레이처럼 차분한 색과 함께 사용하면 "
-            "지나치게 화려하지 않으면서 부드럽고 현대적인 스타일이 됩니다.",
-
         "pair": "그레이 · 화이트 · 버건디"
     },
 
-
     "BROWN": {
-        "rgb": (130, 85, 55),
+        "rgb": (125, 85, 55),
         "name": "브라운",
-        "mood": "Classic & Earthy",
-
+        "mood": "차분하고 클래식한 분위기",
         "destination": "런던 🇬🇧",
-        "destination_desc":
-            "클래식한 건축과 차분한 거리 분위기를 가진 도시입니다. "
-            "브라운의 안정적이고 클래식한 이미지와 잘 어울립니다.",
-
-        "look": "클래식 레이어드 룩",
-        "clothes": [
+        "destination_reason":
+            "고전적인 건축과 차분한 거리 풍경이 브라운의 클래식한 이미지와 잘 맞습니다.",
+        "style": "Classic Layered Look",
+        "fashion": [
             "브라운 재킷",
             "아이보리 니트",
             "진청 데님",
             "로퍼"
         ],
-
-        "fashion_desc":
-            "브라운은 아이보리나 크림 계열과 함께 사용하면 "
-            "무겁지 않으면서도 따뜻하고 클래식한 분위기를 만들 수 있습니다.",
-
         "pair": "아이보리 · 크림 · 네이비"
     },
 
-
     "BLACK": {
-        "rgb": (35, 35, 35),
+        "rgb": (30, 30, 30),
         "name": "블랙",
-        "mood": "Chic & Minimal",
-
+        "mood": "시크하고 도시적인 분위기",
         "destination": "뉴욕 🇺🇸",
-        "destination_desc":
-            "빠르고 현대적인 도시 이미지와 강한 개성이 공존하는 여행지입니다. "
-            "블랙의 시크하고 미니멀한 분위기와 특히 잘 맞습니다.",
-
-        "look": "올 블랙 시티 룩",
-        "clothes": [
+        "destination_reason":
+            "빠르고 현대적인 뉴욕의 분위기가 블랙의 강렬한 도시 이미지와 잘 어울립니다.",
+        "style": "Chic City Look",
+        "fashion": [
             "블랙 재킷",
-            "블랙 또는 차콜 팬츠",
+            "차콜 팬츠",
             "화이트 이너",
             "실버 액세서리"
         ],
-
-        "fashion_desc":
-            "블랙을 중심으로 실루엣을 단순하게 잡고 화이트나 실버를 소량 사용하면 "
-            "깔끔하면서도 강한 도시적인 분위기를 만들 수 있습니다.",
-
         "pair": "화이트 · 차콜 · 실버"
     },
 
-
     "WHITE": {
-        "rgb": (238, 238, 233),
+        "rgb": (240, 240, 235),
         "name": "화이트",
-        "mood": "Clean & Effortless",
-
+        "mood": "깨끗하고 미니멀한 분위기",
         "destination": "코펜하겐 🇩🇰",
-        "destination_desc":
-            "간결한 디자인과 여유로운 분위기가 특징인 도시로, "
-            "화이트의 깨끗하고 미니멀한 이미지와 잘 어울립니다.",
-
-        "look": "에포트리스 미니멀 룩",
-        "clothes": [
+        "destination_reason":
+            "간결한 북유럽 디자인과 여유로운 분위기가 화이트의 미니멀한 느낌과 잘 어울립니다.",
+        "style": "Effortless Minimal Look",
+        "fashion": [
             "화이트 셔츠",
             "베이지 팬츠",
             "심플 스니커즈",
             "블랙 미니백"
         ],
-
-        "fashion_desc":
-            "화이트를 기본으로 두고 베이지나 블랙처럼 대비가 크지 않은 색을 더하면 "
-            "힘을 뺀 듯 자연스러운 미니멀 스타일이 완성됩니다.",
-
         "pair": "베이지 · 블랙 · 데님"
     }
 }
 
 
-# =========================================================
-# 함수
-# =========================================================
+# =========================
+# 색상 계산 함수
+# =========================
 def hex_to_rgb(hex_color):
-    hex_color = hex_color.lstrip("#")
+    hex_color = hex_color.replace("#", "")
 
-    return tuple(
-        int(hex_color[i:i + 2], 16)
-        for i in (0, 2, 4)
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+
+    return r, g, b
+
+
+def color_distance(color1, color2):
+    r1, g1, b1 = color1
+    r2, g2, b2 = color2
+
+    return (
+        (r1 - r2) ** 2
+        + (g1 - g2) ** 2
+        + (b1 - b2) ** 2
     )
 
 
-def color_distance(rgb1, rgb2):
-    return math.sqrt(
-        sum(
-            (a - b) ** 2
-            for a, b in zip(rgb1, rgb2)
-        )
-    )
+def find_nearest_color(hex_color):
+    selected_rgb = hex_to_rgb(hex_color)
 
+    nearest_name = None
+    nearest_distance = None
 
-def get_nearest_color(hex_color):
-    user_rgb = hex_to_rgb(hex_color)
+    for name in color_data:
 
-    nearest_color = None
-    smallest_distance = float("inf")
-
-    for color_name, color_data in color_styles.items():
+        standard_rgb = color_data[name]["rgb"]
 
         distance = color_distance(
-            user_rgb,
-            color_data["rgb"]
+            selected_rgb,
+            standard_rgb
         )
 
-        if distance < smallest_distance:
-            smallest_distance = distance
-            nearest_color = color_name
+        if nearest_distance is None or distance < nearest_distance:
+            nearest_distance = distance
+            nearest_name = name
 
-    return nearest_color
-
-
-def get_text_color(hex_color):
-    r, g, b = hex_to_rgb(hex_color)
-
-    brightness = (
-        r * 299 +
-        g * 587 +
-        b * 114
-    ) / 1000
-
-    if brightness > 165:
-        return "#111111"
-
-    return "#FFFFFF"
+    return nearest_name
 
 
-# =========================================================
-# HERO
-# =========================================================
-html("""
-<div class="hero">
+# =========================
+# 상단
+# =========================
+st.caption("TRIP TONE")
 
-    <div class="logo">
-        TRIP TONE
-    </div>
+st.title("Pick a color,\nfind your journey.")
 
-    <div class="hero-title">
-        Pick a color.<br>
-        Find your journey.
-    </div>
-
-    <div class="hero-sub">
-        당신이 좋아하는 색 하나를 선택해 보세요.<br>
-        색이 가진 분위기를 분석해 어울리는 여행지와
-        여행 패션을 추천해 드립니다.
-    </div>
-
-</div>
-""")
-
-
-# =========================================================
-# COLOR INPUT
-# =========================================================
-html("""
-<div class="input-card">
-
-    <div class="section-label">
-        01 · YOUR COLOR
-    </div>
-
-    <div class="section-title">
-        가장 좋아하는 색은 무엇인가요?
-    </div>
-
-    <div class="section-text">
-        아래 컬러 피커에서 원하는 색을 자유롭게 선택해 주세요.
-    </div>
-
-</div>
-""")
-
-
-favorite_color = st.color_picker(
-    "좋아하는 색 선택",
-    "#5475D8",
-    label_visibility="collapsed"
+st.write(
+    "좋아하는 색 하나를 선택하면 "
+    "그 색의 분위기에 어울리는 여행지와 패션을 추천해 드립니다."
 )
 
-
-nearest_key = get_nearest_color(favorite_color)
-color_info = color_styles[nearest_key]
+st.write("")
 
 
-html(f"""
-<div class="color-preview"
-     style="background:{favorite_color};">
-</div>
+# =========================
+# 색 선택
+# =========================
+with st.container(border=True):
 
-<div class="color-meta">
+    st.subheader("당신이 좋아하는 색은?")
 
-    <span>
-        {color_info["name"]} 계열
-    </span>
+    st.caption(
+        "아래에서 가장 마음에 드는 색을 자유롭게 선택해 주세요."
+    )
 
-    <span>
-        {favorite_color.upper()}
-    </span>
+    selected_color = st.color_picker(
+        "색 선택",
+        "#5475D8"
+    )
 
-</div>
-""")
+    nearest_color = find_nearest_color(
+        selected_color
+    )
+
+    preview_data = color_data[
+        nearest_color
+    ]
+
+    # 한 줄짜리 HTML만 사용
+    # 코드로 표시되는 문제를 피하기 위함
+    st.markdown(
+        f'<div style="height:110px;'
+        f'background:{selected_color};'
+        f'border-radius:18px;'
+        f'margin-top:10px;'
+        f'margin-bottom:12px;"></div>',
+        unsafe_allow_html=True
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.caption(
+            f"가장 가까운 색상 계열 · "
+            f"{preview_data['name']}"
+        )
+
+    with col2:
+        st.caption(
+            f"선택한 색상 · "
+            f"{selected_color.upper()}"
+        )
 
 
 st.write("")
 
-recommend = st.button(
-    "이 색으로 여행 스타일 찾기 →"
+show_result = st.button(
+    "이 색으로 여행 스타일 찾기"
 )
 
 
-# =========================================================
-# RESULT
-# =========================================================
-if recommend:
+# =========================
+# 결과
+# =========================
+if show_result:
 
-    color_info = color_styles[
-        get_nearest_color(favorite_color)
-    ]
-
-    text_color = get_text_color(favorite_color)
-
-
-    # -----------------------------------------------------
-    # 결과 제목
-    # -----------------------------------------------------
-    html("""
-    <div class="result-header">
-
-        <div class="section-label">
-            YOUR TRIP TONE
-        </div>
-
-        <div class="result-big-title">
-            이 색이 안내하는 여행
-        </div>
-
-    </div>
-    """)
-
-
-    # -----------------------------------------------------
-    # 메인 컬러 결과
-    # -----------------------------------------------------
-    html(f"""
-    <div
-        class="hero-result"
-        style="
-            background:{favorite_color};
-            color:{text_color};
-        "
-    >
-
-        <div class="hero-result-label">
-            COLOR MOOD
-        </div>
-
-        <div class="hero-result-title">
-            {color_info["name"]} ·
-            {color_info["mood"]}
-        </div>
-
-        <div class="hero-result-text">
-            당신이 선택한 색과 가장 가까운 색상 계열은
-            <b>{color_info["name"]}</b>입니다.
-            이 색의 분위기를 여행지와 패션에 연결해
-            하나의 여행 스타일로 구성했습니다.
-        </div>
-
-    </div>
-    """)
-
-
-    st.write("")
-    st.write("")
-
-
-    # -----------------------------------------------------
-    # 여행지 + 패션
-    # -----------------------------------------------------
-    col1, col2 = st.columns(
-        [1, 1],
-        gap="large"
+    result_key = find_nearest_color(
+        selected_color
     )
 
+    result = color_data[
+        result_key
+    ]
 
+    st.divider()
+
+    st.caption("YOUR TRIP TONE")
+
+    st.header(
+        f"{result['name']}이 안내하는 여행"
+    )
+
+    st.write(
+        f"선택한 색은 **{result['name']} 계열**과 가장 가깝습니다. "
+        f"{result['mood']}을 중심으로 여행지와 패션을 추천했어요."
+    )
+
+    st.write("")
+
+    col1, col2 = st.columns(2)
+
+    # 여행지
     with col1:
 
-        html(f"""
-        <div class="result-card">
+        with st.container(border=True):
 
-            <div class="result-label">
-                DESTINATION
-            </div>
+            st.caption("DESTINATION")
 
-            <div class="result-title">
-                {color_info["destination"]}
-            </div>
-
-            <div class="result-text">
-                {color_info["destination_desc"]}
-            </div>
-
-        </div>
-        """)
-
-
-    with col2:
-
-        clothes_html = ""
-
-        for item in color_info["clothes"]:
-            clothes_html += (
-                f'<span class="chip">{item}</span>'
+            st.subheader(
+                result["destination"]
             )
 
-        html(f"""
-        <div class="result-card">
-
-            <div class="result-label">
-                FASHION
-            </div>
-
-            <div class="result-title">
-                {color_info["look"]}
-            </div>
-
-            <div style="margin-bottom:18px;">
-                {clothes_html}
-            </div>
-
-            <div class="result-text">
-                {color_info["fashion_desc"]}
-            </div>
-
-        </div>
-        """)
+            st.write(
+                result["destination_reason"]
+            )
 
 
-    # -----------------------------------------------------
+    # 패션
+    with col2:
+
+        with st.container(border=True):
+
+            st.caption("FASHION")
+
+            st.subheader(
+                result["style"]
+            )
+
+            for item in result["fashion"]:
+                st.write(
+                    f"• {item}"
+                )
+
+
+    st.write("")
+
     # 컬러 조합
-    # -----------------------------------------------------
-    st.write("")
-    st.write("")
+    with st.container(border=True):
 
-    html(f"""
-    <div class="card">
+        st.caption("COLOR PALETTE")
 
-        <div class="section-label">
-            COLOR PALETTE
-        </div>
+        st.subheader(
+            "함께 입으면 좋은 색"
+        )
 
-        <div class="section-title">
-            함께 입으면 좋은 색
-        </div>
+        st.write(
+            result["pair"]
+        )
 
-        <div class="section-text">
-            선택한 <b>{color_info["name"]}</b>과
-            <b>{color_info["pair"]}</b> 조합을 사용하면
-            전체 코디를 보다 자연스럽게 정리할 수 있습니다.
-        </div>
-
-    </div>
-    """)
+        st.write(
+            f"**{result['name']}**을 포인트 색으로 사용하고 "
+            "나머지 색을 기본색으로 조합하면 "
+            "전체 코디가 더 자연스럽게 정리됩니다."
+        )
 
 
-# =========================================================
-# FOOTER
-# =========================================================
-html("""
-<div class="custom-footer">
-    TRIP TONE · COLOR YOUR JOURNEY
-</div>
-""")
+st.write("")
+st.write("")
+st.caption(
+    "TRIP TONE · COLOR YOUR JOURNEY"
+)
